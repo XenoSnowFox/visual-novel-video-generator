@@ -90,6 +90,14 @@ public:
   CommandProcessor(std::string aName, std::string aSummary,
                    CommandProcessor *aParent);
 
+  /**
+   * @brief Prints this commands's help text.
+   *
+   * The output includes this command's usage, options, and subcommands, using
+   * the metadata registered on this parser.
+   */
+  virtual void printHelpDocumentation(std::ostream &oss) const;
+
 protected:
   /**
    * @brief Adds an example to the command's generated documentation.
@@ -98,6 +106,16 @@ protected:
    * arrival order without validation or deduplication.
    */
   void addExample(CommandExample aExample);
+
+  /**
+   * @brief Registers a subcommand.
+   *
+   * @param aSubcommand Processor to append in arrival order. Ownership is
+   * retained through the shared pointer, and the processor is moved into the
+   * collection without validation or deduplication. This method does not
+   * establish or modify the subcommand's parent relationship.
+   */
+  void addSubcommand(std::shared_ptr<CommandProcessor> aSubcommand);
 
 private:
   /**
@@ -126,5 +144,10 @@ private:
    * uniqueness and is populated through addExample().
    */
   std::vector<CommandExample> mExamples;
+
+  /**
+   * @brief Processors for subcommands nested under this command.
+   */
+  std::vector<std::shared_ptr<CommandProcessor>> mSubcommands;
 };
 } // namespace core
