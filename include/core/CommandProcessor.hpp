@@ -11,9 +11,8 @@ namespace core {
 /**
  * @brief Describes a command-line option and how to process it.
  *
- * The callback receives the remaining command-line tokens after one of the
- * option's keywords is matched and removed. This structure stores parser
- * configuration only; it does not validate or process the queue by itself.
+ * Instances store parser configuration only; they do not match keywords,
+ * consume command-line tokens, or invoke the callback by themselves.
  */
 struct ArgumentParser {
   /**
@@ -39,8 +38,12 @@ struct ArgumentParser {
   const std::string summary;
 
   /**
-   * @brief Processes the next command-line token after a keyword is matched
-   * with a supplied argument_name.
+   * @brief Callback invoked by a consumer after a keyword is matched.
+   *
+   * The optional value is expected to contain the token parsed as the
+   * option's argument. It is disengaged when argument_name is disengaged or
+   * when the consumer has no argument to provide. The structure does not
+   * enforce either convention.
    */
   const std::function<void(std::optional<std::string>)> callback;
 };
@@ -80,8 +83,12 @@ public:
    * without validation.
    * @param aSummary Short description of the command. It is stored as
    * provided, without formatting or length validation.
+   * @param aParent Non-owning parent command, or `nullptr` when this command
+   * is the root. The pointed-to command must outlive this command; the
+   * constructor does not take ownership of it or validate the hierarchy.
    */
-  CommandProcessor(std::string aName, std::string aSummary);
+  CommandProcessor(std::string aName, std::string aSummary,
+                   CommandProcessor *aParent);
 
 protected:
   /**
@@ -90,7 +97,7 @@ protected:
    * @param aExample Example to append. It is moved into the collection in
    * arrival order without validation or deduplication.
    */
-  void addExample(const CommandExample aExample);
+  void addExample(CommandExample aExample);
 
 private:
   /**
@@ -108,11 +115,16 @@ private:
   const std::string mSummary;
 
   /**
+   * @brief Non-owning pointer to the parent parser, or `nullptr` for the root.
+   */
+  CommandProcessor *const mParent;
+
+  /**
    * @brief Examples registered for the command's generated documentation.
    *
    * Examples are retained in arrival order. The collection does not enforce
    * uniqueness and is populated through addExample().
    */
-  std::vector<const CommandExample> mExamples;
+  std::vector<CommandExample> mExamples;
 };
 } // namespace core
