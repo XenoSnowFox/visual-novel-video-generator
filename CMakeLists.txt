@@ -39,8 +39,12 @@ include(FetchContent)
 file(GLOB_RECURSE APP_SOURCES
     CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+)
+
+file(GLOB_RECURSE APP_HEADERS
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
 # ------------------------------------------------------------------------------
@@ -48,13 +52,14 @@ file(GLOB_RECURSE APP_SOURCES
 # ------------------------------------------------------------------------------
 add_executable(${PROJECT_NAME}
     ${APP_SOURCES}
+    ${APP_HEADERS}
 )
 
 # ------------------------------------------------------------------------------
 # Include Directories
 # ------------------------------------------------------------------------------
 target_include_directories(${PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Compile Flags
@@ -82,7 +87,7 @@ if(BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
     )
 
-    set(TEST_IMPLEMENTATION_SOURCES ${FINANCE_CORE_SOURCES})
+    set(TEST_IMPLEMENTATION_SOURCES ${APP_SOURCES})
     list(REMOVE_ITEM TEST_IMPLEMENTATION_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp"
     )
