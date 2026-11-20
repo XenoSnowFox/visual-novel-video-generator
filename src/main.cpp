@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <iostream>
 #include <queue>
 #include <string>
@@ -5,6 +6,8 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+#include "command/RootCommand.hpp"
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
@@ -17,11 +20,11 @@ int main(int argc, char *argv[]) {
     arguments.emplace(argv[i]);
   }
 
-  std::cout << "Hello World." << std::endl;
-  while (!arguments.empty()) {
-    std::cout << arguments.front() << std::endl;
-    arguments.pop();
-  }
+  // create a new root command processor
+  const std::string programExecutableName =
+      std::filesystem::path(argv[0]).filename().string();
+  command::RootCommand rootCommand(programExecutableName);
+  rootCommand.printHelpDocumentation(std::cout);
 
   // done
   return 0;
