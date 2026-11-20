@@ -1,5 +1,5 @@
+#include <algorithm>
 #include <iomanip>
-#include <iostream>
 #include <utility>
 
 #include "core/CommandProcessor.hpp"
@@ -19,6 +19,11 @@ void core::CommandProcessor::addSubcommand(
   mSubcommands.push_back(std::move(aSubcommand));
 }
 
+void core::CommandProcessor::addArgument(
+    std::shared_ptr<CommandArgument> aArgument) {
+  mArguments.push_back(std::move(aArgument));
+}
+
 /**
  * @brief Prints this parser's help text.
  *
@@ -35,6 +40,24 @@ void core::CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
 
   std::vector<std::string> option_labels{"-h, --help"};
   std::size_t option_width = option_labels.front().size();
+  for (const std::shared_ptr<CommandArgument> &argument : this->mArguments) {
+    std::string label;
+    for (std::size_t i = 0; i < argument->keywords.size(); ++i) {
+      if (i > 0) {
+        label += ", ";
+      }
+      label += argument->keywords[i];
+    }
+    if (argument->argument_name) {
+      label += " <";
+      label += *argument->argument_name;
+      label += ">";
+    }
+    if (label.size() > option_width) {
+      option_width = label.size();
+    }
+    option_labels.push_back(std::move(label));
+  }
 
   oss << "Usage:";
   for (const std::string &command_name : command_path) {
@@ -48,6 +71,10 @@ void core::CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
 
   oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
       << option_labels.front() << "Show this help message and exit\n";
+  for (std::size_t i = 0; i < this->mArguments.size(); ++i) {
+    oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
+        << option_labels[i + 1] << this->mArguments[i]->summary << '\n';
+  }
 
   if (!this->mSubcommands.empty()) {
     std::size_t command_width = 0;

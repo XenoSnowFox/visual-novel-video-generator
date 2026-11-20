@@ -1,8 +1,9 @@
 #pragma once
 
 #include <functional>
+#include <iostream>
+#include <memory>
 #include <optional>
-#include <queue>
 #include <string>
 #include <vector>
 
@@ -14,7 +15,7 @@ namespace core {
  * Instances store parser configuration only; they do not match keywords,
  * consume command-line tokens, or invoke the callback by themselves.
  */
-struct ArgumentParser {
+struct CommandArgument {
   /**
    * @brief Keywords that identify the option, such as `-s` or `--something`.
    *
@@ -24,18 +25,18 @@ struct ArgumentParser {
   const std::vector<std::string> keywords;
 
   /**
-   * @brief Name of the value expected after the option.
-   *
-   * A disengaged optional indicates that the option does not take a value.
-   */
-  const std::optional<std::string> argument_name;
-
-  /**
    * @brief Short description shown in help and generated documentation.
    *
    * The structure does not impose a length or formatting requirement.
    */
   const std::string summary;
+
+  /**
+   * @brief Name of the value expected after the option.
+   *
+   * A disengaged optional indicates that the option does not take a value.
+   */
+  const std::optional<std::string> argument_name;
 
   /**
    * @brief Callback invoked by a consumer after a keyword is matched.
@@ -108,6 +109,17 @@ protected:
   void addExample(CommandExample aExample);
 
   /**
+   * @brief Registers an option with the command.
+   *
+   * @param aArgument Option to append. Ownership is retained through the shared
+   * pointer, and the option is moved into the collection in arrival order
+   * without validation or deduplication. The command does not invoke the
+   * option's callback; consumers are responsible for parsing and processing
+   * registered arguments.
+   */
+  void addArgument(std::shared_ptr<CommandArgument> aArgument);
+
+  /**
    * @brief Registers a subcommand.
    *
    * @param aSubcommand Processor to append in arrival order. Ownership is
@@ -138,16 +150,21 @@ private:
   CommandProcessor *const mParent;
 
   /**
+   * @brief Options recognized by this command.
+   */
+  std::vector<std::shared_ptr<CommandArgument>> mArguments;
+
+  /**
+   * @brief Processors for subcommands nested under this command.
+   */
+  std::vector<std::shared_ptr<CommandProcessor>> mSubcommands;
+
+  /**
    * @brief Examples registered for the command's generated documentation.
    *
    * Examples are retained in arrival order. The collection does not enforce
    * uniqueness and is populated through addExample().
    */
   std::vector<CommandExample> mExamples;
-
-  /**
-   * @brief Processors for subcommands nested under this command.
-   */
-  std::vector<std::shared_ptr<CommandProcessor>> mSubcommands;
 };
 } // namespace core
