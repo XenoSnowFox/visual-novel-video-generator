@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <iomanip>
 #include <utility>
 
@@ -157,7 +158,13 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
   if (!this->mSubcommands.empty()) {
     oss << " <COMMAND>";
   }
-  oss << "\n\n" << this->mSummary << "\n\nOptions:\n";
+  oss << "\n\n";
+  if (!std::all_of(
+          this->mSummary.begin(), this->mSummary.end(),
+          [](unsigned char aCharacter) { return std::isspace(aCharacter); })) {
+    oss << this->mSummary << "\n\n";
+  }
+  oss << "Options:\n";
 
   oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
       << option_labels.front() << "Show this help message and exit\n";
