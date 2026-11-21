@@ -37,13 +37,13 @@ struct CommandArgument {
    *
    * A disengaged optional indicates that the option does not take a value.
    */
-  const std::optional<std::string> argument_name;
+  const std::optional<std::string> argumentName;
 
   /**
    * @brief Callback invoked by a consumer after a keyword is matched.
    *
    * The optional value is expected to contain the token parsed as the
-   * option's argument. It is disengaged when argument_name is disengaged or
+   * option's argument. It is disengaged when argumentName is disengaged or
    * when the consumer has no argument to provide. The structure does not
    * enforce either convention.
    */

@@ -68,11 +68,6 @@ int CommandProcessor::process(std::queue<std::string> &args) const {
       return *result;
     }
 
-    // if (positional_argument_name && !positional_argument) {
-    //   positional_argument = keyword;
-    //   continue;
-    // }
-
     std::cerr << "Error: unrecognized command or option '" << keyword
               << "' for '" << this->mName << "'.\n";
     return 1;
@@ -103,9 +98,9 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
       }
       label += argument->keywords[i];
     }
-    if (argument->argument_name) {
+    if (argument->argumentName) {
       label += " <";
-      label += *argument->argument_name;
+      label += *argument->argumentName;
       label += ">";
     }
     if (label.size() > option_width) {
@@ -122,9 +117,6 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
   if (!this->mSubcommands.empty()) {
     oss << " <COMMAND>";
   }
-  //   if (positional_argument_name) {
-  //     oss << " [<" << *positional_argument_name << ">]";
-  //   }
   oss << "\n\n" << this->mSummary << "\n\nOptions:\n";
 
   oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
@@ -175,7 +167,7 @@ bool CommandProcessor::dispatchArgumentParsers(
     if (std::find(parser->keywords.begin(), parser->keywords.end(), keyword) !=
         parser->keywords.end()) {
       std::optional<std::string> argument;
-      if (parser->argument_name && !args.empty()) {
+      if (parser->argumentName && !args.empty()) {
         argument = args.front();
         args.pop();
       }
