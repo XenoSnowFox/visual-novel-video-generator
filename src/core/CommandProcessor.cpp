@@ -4,33 +4,74 @@
 
 #include "core/CommandProcessor.hpp"
 
-core::CommandProcessor::CommandProcessor(std::string aName,
-                                         std::string aSummary,
-                                         CommandProcessor *aParent)
+namespace core {
+
+// -----------------------------------------------------------------------------
+// Construction and registration
+// -----------------------------------------------------------------------------
+
+CommandProcessor::CommandProcessor(std::string aName, std::string aSummary,
+                                   CommandProcessor *aParent)
     : mName(std::move(aName)), mSummary(std::move(aSummary)), mParent(aParent) {
 }
 
-void core::CommandProcessor::addExample(CommandExample aExample) {
+void CommandProcessor::addExample(CommandExample aExample) {
   mExamples.push_back(std::move(aExample));
 }
 
-void core::CommandProcessor::addSubcommand(
+void CommandProcessor::addSubcommand(
     std::shared_ptr<CommandProcessor> aSubcommand) {
   mSubcommands.push_back(std::move(aSubcommand));
 }
 
-void core::CommandProcessor::addArgument(
-    std::shared_ptr<CommandArgument> aArgument) {
+void CommandProcessor::addArgument(std::shared_ptr<CommandArgument> aArgument) {
   mArguments.push_back(std::move(aArgument));
 }
 
-/**
- * @brief Prints this parser's help text.
- *
- * The output includes this command's usage, options, and subcommands, using
- * the metadata registered on this parser.
- */
-void core::CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
+// -----------------------------------------------------------------------------
+// Command processing
+// -----------------------------------------------------------------------------
+
+int CommandProcessor::process(std::queue<std::string> &args) const {
+  std::optional<std::string> positional_argument;
+
+  // iterate over the remaining arguments in the queue by popping the nextitem
+  while (!args.empty()) {
+    // remove the next keyword
+    const std::string keyword = args.front();
+    args.pop();
+
+    if (this->dispatchHelpDocumentation(keyword, args)) {
+      return 0;
+    }
+
+    if (this->dispatchArgumentParsers(keyword, args)) {
+      continue;
+    }
+
+    if (const std::optional<int> result =
+            this->dispatchCommandParsers(keyword, args)) {
+      return *result;
+    }
+
+    // if (positional_argument_name && !positional_argument) {
+    //   positional_argument = keyword;
+    //   continue;
+    // }
+
+    std::cerr << "Error: unrecognized command or option '" << keyword
+              << "' for '" << this->mName << "'.\n";
+    return 1;
+  }
+
+  return executeCommand(positional_argument);
+};
+
+// -----------------------------------------------------------------------------
+// Help documentation
+// -----------------------------------------------------------------------------
+
+void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
   std::vector<std::string> command_path;
   for (const CommandProcessor *processor = this; processor != nullptr;
        processor = processor->mParent) {
@@ -67,6 +108,9 @@ void core::CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
   if (!this->mSubcommands.empty()) {
     oss << " <COMMAND>";
   }
+  //   if (positional_argument_name) {
+  //     oss << " [<" << *positional_argument_name << ">]";
+  //   }
   oss << "\n\n" << this->mSummary << "\n\nOptions:\n";
 
   oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
@@ -93,3 +137,55 @@ void core::CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
     }
   }
 }
+
+// -----------------------------------------------------------------------------
+// Dispatch helpers
+// -----------------------------------------------------------------------------
+
+bool CommandProcessor::dispatchHelpDocumentation(
+    const std::string &keyword,
+    [[maybe_unused]] std::queue<std::string> &arArgs) const {
+  if (keyword == "-h" || keyword == "--help") {
+    this->printHelpDocumentation(std::cout);
+    return true;
+  }
+  return false;
+}
+
+bool CommandProcessor::dispatchArgumentParsers(
+    const std::string &keyword, std::queue<std::string> &args) const {
+  // loop over the argument parsers
+  for (const std::shared_ptr<CommandArgument> &parser : this->mArguments) {
+    // if we don't match on the keywords then move to the next argument
+    // parser
+    if (std::find(parser->keywords.begin(), parser->keywords.end(), keyword) !=
+        parser->keywords.end()) {
+      std::optional<std::string> argument;
+      if (parser->argument_name && !args.empty()) {
+        argument = args.front();
+        args.pop();
+      }
+      parser->callback(std::move(argument));
+      return true;
+    }
+  }
+
+  // we found no argument matches
+  return false;
+}
+
+std::optional<int>
+CommandProcessor::dispatchCommandParsers(const std::string &keyword,
+                                         std::queue<std::string> &args) const {
+
+  for (const std::shared_ptr<CommandProcessor> &parser : this->mSubcommands) {
+    if (keyword == parser->mName) {
+      return parser->process(args);
+    }
+  }
+
+  // we found no command matches
+  return std::nullopt;
+}
+
+} // namespace core

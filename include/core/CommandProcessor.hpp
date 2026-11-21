@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -92,6 +93,18 @@ public:
                    CommandProcessor *aParent);
 
   /**
+   * @brief Parses queued tokens and dispatches options or subcommands.
+   *
+   * Matched tokens are removed from the queue. Option callbacks receive their
+   * optional value; if no subcommand is selected, this command's execution
+   * hook runs after parsing completes. Help options print help and return `0`.
+   * @param args Queue of command-line tokens to consume.
+   * @return The command's execution result, `0` when help is shown, or `1` for
+   * an unrecognized token.
+   */
+  virtual int process(std::queue<std::string> &args) const;
+
+  /**
    * @brief Prints this commands's help text.
    *
    * The output includes this command's usage, options, and subcommands, using
@@ -128,6 +141,29 @@ protected:
    * establish or modify the subcommand's parent relationship.
    */
   void addSubcommand(std::shared_ptr<CommandProcessor> aSubcommand);
+
+  /**
+   * @brief Executes this command after options and positional arguments parse.
+   * @param aPositionalArgument Parsed positional argument, if provided.
+   * @return The command result; by default, delegates to executeCommand().
+   */
+  virtual int
+  executeCommand(const std::optional<std::string> &aPositionalArgument) const {
+    static_cast<void>(aPositionalArgument);
+    return executeCommand();
+  }
+
+  /**
+   * @brief Executes this command after its options have been parsed.
+   *
+   * Override this method in a derived parser to provide command behavior.
+   * @return Command result code; the default implementation returns `1`.
+   */
+  virtual int executeCommand() const {
+    std::cerr << "Error: no action is defined for command '" << this->mName
+              << "'.\n";
+    return 1;
+  }
 
 private:
   /**
@@ -166,5 +202,36 @@ private:
    * uniqueness and is populated through addExample().
    */
   std::vector<CommandExample> mExamples;
+
+  /**
+   * @brief Handles a help keyword by printing help for this parser.
+   * @param keyword Token being checked for a help option.
+   * @param arArgs Remaining tokens; unused because parsing stops after help is
+   * printed.
+   * @return `true` when help was printed; otherwise `false`.
+   */
+  bool dispatchHelpDocumentation(
+      const std::string &keyword,
+      [[maybe_unused]] std::queue<std::string> &arArgs) const;
+
+  /**
+   * @brief Dispatches a keyword to a matching argument callback.
+   * @param keyword Keyword to match against the registered arguments.
+   * @param args Remaining command-line tokens passed to the callback.
+   * @return `true` if a matching argument callback was invoked; otherwise
+   * `false`.
+   */
+  bool dispatchArgumentParsers(const std::string &keyword,
+                               std::queue<std::string> &args) const;
+
+  /**
+   * @brief Dispatches a command name to its matching subcommand parser.
+   * @param keyword Command name to match against the registered subcommands.
+   * @param args Remaining command-line tokens passed to the subcommand parser.
+   * @return The subcommand's result code if matched; otherwise `std::nullopt`.
+   */
+  std::optional<int>
+  dispatchCommandParsers(const std::string &keyword,
+                         std::queue<std::string> &args) const;
 };
 } // namespace core

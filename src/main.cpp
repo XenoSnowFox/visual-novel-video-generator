@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   const std::string programExecutableName =
       std::filesystem::path(argv[0]).filename().string();
   command::RootCommand rootCommand(programExecutableName);
-  rootCommand.printHelpDocumentation(std::cout);
+  rootCommand.process(arguments);
 
   // done
   return 0;
