@@ -252,6 +252,5 @@ private:
    * @return Nothing.
    */
   void printMissingArguments(std::size_t aParsedArgumentCount) const;
-
 };
 } // namespace core
