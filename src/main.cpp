@@ -1,4 +1,4 @@
-#include <iostream>
+#include <filesystem>
 #include <queue>
 #include <string>
 
@@ -6,8 +6,11 @@
 #include <windows.h>
 #endif
 
+#include "command/RootCommand.hpp"
+
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
+  // Enable UTF-8 Console output of windows
   SetConsoleOutputCP(CP_UTF8);
 #endif
 
@@ -17,12 +20,11 @@ int main(int argc, char *argv[]) {
     arguments.emplace(argv[i]);
   }
 
-  std::cout << "Hello World." << std::endl;
-  while (!arguments.empty()) {
-    std::cout << arguments.front() << std::endl;
-    arguments.pop();
-  }
+  // create a new root command processor
+  const std::string programExecutableName =
+      std::filesystem::path(argv[0]).filename().string();
+  command::RootCommand rootCommand(programExecutableName);
 
-  // done
-  return 0;
+  // execute the command
+  return rootCommand.process(arguments);
 }
