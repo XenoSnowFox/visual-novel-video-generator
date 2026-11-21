@@ -4,6 +4,20 @@
 
 #include "core/CommandProcessor.hpp"
 
+namespace {
+/**
+ * @brief Checks whether a command-line keyword requests help.
+ *
+ * Matching is exact and case-sensitive; only `-h` and `--help` are recognized.
+ *
+ * @param aKeyword The command-line keyword to inspect.
+ * @return `true` when the keyword is `-h` or `--help`; otherwise `false`.
+ */
+inline bool isHelpKeyword(const std::string &aKeyword) {
+  return aKeyword == "-h" || aKeyword == "--help";
+}
+} // namespace
+
 namespace core {
 
 // -----------------------------------------------------------------------------
@@ -145,7 +159,7 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
 bool CommandProcessor::dispatchHelpDocumentation(
     const std::string &keyword,
     [[maybe_unused]] std::queue<std::string> &arArgs) const {
-  if (keyword == "-h" || keyword == "--help") {
+  if (::isHelpKeyword(keyword)) {
     this->printHelpDocumentation(std::cout);
     return true;
   }
