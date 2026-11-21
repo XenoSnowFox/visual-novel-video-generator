@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <iostream>
 #include <queue>
 #include <string>
 
@@ -11,6 +10,7 @@
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
+  // Enable UTF-8 Console output of windows
   SetConsoleOutputCP(CP_UTF8);
 #endif
 
@@ -24,8 +24,7 @@ int main(int argc, char *argv[]) {
   const std::string programExecutableName =
       std::filesystem::path(argv[0]).filename().string();
   command::RootCommand rootCommand(programExecutableName);
-  rootCommand.process(arguments);
 
-  // done
-  return 0;
+  // execute the command
+  return rootCommand.process(arguments);
 }
