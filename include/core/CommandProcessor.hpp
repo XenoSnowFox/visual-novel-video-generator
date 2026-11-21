@@ -11,20 +11,12 @@
 namespace core {
 
 /**
- * @brief Describes a command-line option and how to process it.
+ * @brief Describes a command-line value and how to process it.
  *
- * Instances store parser configuration only; they do not match keywords,
- * consume command-line tokens, or invoke the callback by themselves.
+ * Instances store parser configuration only and can describe either a
+ * positional argument or the value accepted by an option.
  */
 struct CommandArgument {
-  /**
-   * @brief Keywords that identify the option, such as `-s` or `--something`.
-   *
-   * Keywords are stored exactly as provided. The structure does not enforce
-   * uniqueness or a required prefix.
-   */
-  const std::vector<std::string> keywords;
-
   /**
    * @brief Short description shown in help and generated documentation.
    *
@@ -33,14 +25,15 @@ struct CommandArgument {
   const std::string summary;
 
   /**
-   * @brief Name of the value expected after the option.
+   * @brief Name displayed for the accepted value.
    *
-   * A disengaged optional indicates that the option does not take a value.
+   * A disengaged optional indicates that an option does not take a value.
+   * Positional arguments require an engaged value name.
    */
   const std::optional<std::string> argumentName;
 
   /**
-   * @brief Callback invoked by a consumer after a keyword is matched.
+   * @brief Callback invoked after an option or positional argument is parsed.
    *
    * The optional value is expected to contain the token parsed as the
    * option's argument. It is disengaged when argumentName is disengaged or
@@ -48,6 +41,22 @@ struct CommandArgument {
    * enforce either convention.
    */
   const std::function<void(std::optional<std::string>)> callback;
+};
+
+/**
+ * @brief Describes a keyword option and the value it accepts.
+ *
+ * The keywords identify the option while the inherited metadata describes its
+ * accepted value and callback.
+ */
+struct CommandOptionArgument : public CommandArgument {
+  /**
+   * @brief Keywords that identify the option, such as `-s` or `--something`.
+   *
+   * Keywords are stored exactly as provided. The structure does not enforce
+   * uniqueness or a required prefix.
+   */
+  const std::vector<std::string> keywords;
 };
 
 /**
@@ -73,8 +82,8 @@ struct CommandExample {
 /**
  * @brief Stores the identity and help summary for a command-line command.
  *
- * Parsing behavior is not implemented by this class at present; it currently
- * only retains the supplied command metadata.
+ * The processor also dispatches registered options and subcommands, retaining
+ * unmatched tokens as positional arguments.
  */
 class CommandProcessor {
 public:
@@ -98,11 +107,15 @@ public:
    * Matched tokens are removed from the queue. Option callbacks receive their
    * optional value; if no subcommand is selected, this command's execution
    * hook runs after parsing completes. Help options print help and return `0`.
-   * @param args Queue of command-line tokens to consume.
-   * @return The command's execution result, `0` when help is shown, or `1` for
-   * an unrecognized token.
+   * Positional arguments are assigned to their registered definitions in
+   * arrival order. Tokens are still matched as options and subcommands first.
+   * If a subcommand follows positional arguments, the current command executes
+   * before the subcommand.
+   *
+   * @param arArgs Queue of command-line tokens to consume.
+   * @return The command's execution result, or `0` when help is shown.
    */
-  virtual int process(std::queue<std::string> &args) const;
+  virtual int process(std::queue<std::string> &arArgs) const;
 
   /**
    * @brief Prints this commands's help text.
@@ -126,11 +139,9 @@ protected:
    *
    * @param aArgument Option to append. Ownership is retained through the shared
    * pointer, and the option is moved into the collection in arrival order
-   * without validation or deduplication. The command does not invoke the
-   * option's callback; consumers are responsible for parsing and processing
-   * registered arguments.
+   * without validation or deduplication.
    */
-  void addArgument(std::shared_ptr<CommandArgument> aArgument);
+  void addArgument(std::shared_ptr<CommandOptionArgument> aArgument);
 
   /**
    * @brief Registers a subcommand.
@@ -143,20 +154,22 @@ protected:
   void addSubcommand(std::shared_ptr<CommandProcessor> aSubcommand);
 
   /**
-   * @brief Executes this command after options and positional arguments parse.
-   * @param aPositionalArgument Parsed positional argument, if provided.
-   * @return The command result; by default, delegates to executeCommand().
+   * @brief Registers a required positional argument for this command.
+   *
+   * Positional arguments are consumed in registration order and each adds one
+   * expected command-line token.
+   *
+   * @param aArgument Positional argument to append. Ownership is retained
+   * through the shared pointer, without validation or deduplication.
    */
-  virtual int
-  executeCommand(const std::optional<std::string> &aPositionalArgument) const {
-    static_cast<void>(aPositionalArgument);
-    return executeCommand();
-  }
+  void addPositionalArgument(std::shared_ptr<CommandArgument> aArgument);
 
   /**
-   * @brief Executes this command after its options have been parsed.
+   * @brief Executes this command after its options and positionals are parsed.
    *
    * Override this method in a derived parser to provide command behavior.
+   * Option and positional values are available to the derived parser through
+   * their registered callbacks.
    * @return Command result code; the default implementation returns `1`.
    */
   virtual int executeCommand() const {
@@ -188,12 +201,17 @@ private:
   /**
    * @brief Options recognized by this command.
    */
-  std::vector<std::shared_ptr<CommandArgument>> mArguments;
+  std::vector<std::shared_ptr<CommandOptionArgument>> mArguments;
 
   /**
    * @brief Processors for subcommands nested under this command.
    */
   std::vector<std::shared_ptr<CommandProcessor>> mSubcommands;
+
+  /**
+   * @brief Required positional arguments in command-line order.
+   */
+  std::vector<std::shared_ptr<CommandArgument>> mPositionalArguments;
 
   /**
    * @brief Examples registered for the command's generated documentation.
@@ -205,33 +223,35 @@ private:
 
   /**
    * @brief Handles a help keyword by printing help for this parser.
-   * @param keyword Token being checked for a help option.
+   * @param aKeyword Token being checked for a help option.
    * @param arArgs Remaining tokens; unused because parsing stops after help is
    * printed.
    * @return `true` when help was printed; otherwise `false`.
    */
   bool dispatchHelpDocumentation(
-      const std::string &keyword,
+      const std::string &aKeyword,
       [[maybe_unused]] std::queue<std::string> &arArgs) const;
 
   /**
    * @brief Dispatches a keyword to a matching argument callback.
-   * @param keyword Keyword to match against the registered arguments.
-   * @param args Remaining command-line tokens passed to the callback.
+   * @param aKeyword Keyword to match against the registered arguments.
+   * @param arArgs Remaining command-line tokens passed to the callback.
    * @return `true` if a matching argument callback was invoked; otherwise
    * `false`.
    */
-  bool dispatchArgumentParsers(const std::string &keyword,
-                               std::queue<std::string> &args) const;
+  bool dispatchArgumentParsers(const std::string &aKeyword,
+                               std::queue<std::string> &arArgs) const;
 
   /**
-   * @brief Dispatches a command name to its matching subcommand parser.
-   * @param keyword Command name to match against the registered subcommands.
-   * @param args Remaining command-line tokens passed to the subcommand parser.
-   * @return The subcommand's result code if matched; otherwise `std::nullopt`.
+   * @brief Prints all unparsed positional arguments and their descriptions.
+   *
+   * Reporting starts at the first positional definition that has not consumed
+   * a command-line token.
+   *
+   * @param aParsedArgumentCount Number of positional arguments already parsed.
+   * @return Nothing.
    */
-  std::optional<int>
-  dispatchCommandParsers(const std::string &keyword,
-                         std::queue<std::string> &args) const;
+  void printMissingArguments(std::size_t aParsedArgumentCount) const;
+
 };
 } // namespace core

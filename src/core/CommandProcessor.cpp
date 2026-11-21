@@ -38,42 +38,77 @@ void CommandProcessor::addSubcommand(
   mSubcommands.push_back(std::move(aSubcommand));
 }
 
-void CommandProcessor::addArgument(std::shared_ptr<CommandArgument> aArgument) {
+void CommandProcessor::addArgument(
+    std::shared_ptr<CommandOptionArgument> aArgument) {
   mArguments.push_back(std::move(aArgument));
+}
+
+void CommandProcessor::addPositionalArgument(
+    std::shared_ptr<CommandArgument> aArgument) {
+  mPositionalArguments.push_back(std::move(aArgument));
 }
 
 // -----------------------------------------------------------------------------
 // Command processing
 // -----------------------------------------------------------------------------
 
-int CommandProcessor::process(std::queue<std::string> &args) const {
-  std::optional<std::string> positional_argument;
+int CommandProcessor::process(std::queue<std::string> &arArgs) const {
+  std::optional<std::vector<std::string>> positionalArguments;
 
-  // iterate over the remaining arguments in the queue by popping the nextitem
-  while (!args.empty()) {
-    // remove the next keyword
-    const std::string keyword = args.front();
-    args.pop();
+  while (!arArgs.empty()) {
+    const std::string keyword = arArgs.front();
+    arArgs.pop();
 
-    if (this->dispatchHelpDocumentation(keyword, args)) {
+    if (this->dispatchHelpDocumentation(keyword, arArgs)) {
       return 0;
     }
 
-    if (this->dispatchArgumentParsers(keyword, args)) {
+    if (this->dispatchArgumentParsers(keyword, arArgs)) {
       continue;
     }
 
-    if (const std::optional<int> result =
-            this->dispatchCommandParsers(keyword, args)) {
-      return *result;
+    for (const std::shared_ptr<CommandProcessor> &parser : this->mSubcommands) {
+      if (keyword == parser->mName) {
+        if (positionalArguments &&
+            positionalArguments->size() != mPositionalArguments.size()) {
+          this->printMissingArguments(positionalArguments->size());
+          return 1;
+        }
+        if (positionalArguments) {
+          const int result = this->executeCommand();
+          if (result != 0) {
+            return result;
+          }
+        }
+        return parser->process(arArgs);
+      }
     }
 
-    std::cerr << "Error: unrecognized command or option '" << keyword
-              << "' for '" << this->mName << "'.\n";
+    if (!positionalArguments) {
+      positionalArguments.emplace();
+    }
+    if (positionalArguments->size() >= mPositionalArguments.size()) {
+      std::cerr << "Error: unrecognized command or option '" << keyword
+                << "' for '" << this->mName << "'.\n";
+      return 1;
+    }
+
+    mPositionalArguments[positionalArguments->size()]->callback(
+        std::optional<std::string>(keyword));
+    positionalArguments->push_back(keyword);
+  }
+
+  if (positionalArguments &&
+      positionalArguments->size() != mPositionalArguments.size()) {
+    this->printMissingArguments(positionalArguments->size());
+    return 1;
+  }
+  if (!positionalArguments && !mPositionalArguments.empty()) {
+    this->printMissingArguments(0);
     return 1;
   }
 
-  return executeCommand(positional_argument);
+  return executeCommand();
 };
 
 // -----------------------------------------------------------------------------
@@ -90,7 +125,8 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
 
   std::vector<std::string> option_labels{"-h, --help"};
   std::size_t option_width = option_labels.front().size();
-  for (const std::shared_ptr<CommandArgument> &argument : this->mArguments) {
+  for (const std::shared_ptr<CommandOptionArgument> &argument :
+       this->mArguments) {
     std::string label;
     for (std::size_t i = 0; i < argument->keywords.size(); ++i) {
       if (i > 0) {
@@ -114,6 +150,10 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
     oss << ' ' << command_name;
   }
   oss << " [OPTIONS]";
+  for (const std::shared_ptr<CommandArgument> &argument :
+       this->mPositionalArguments) {
+    oss << " <" << *argument->argumentName << ">";
+  }
   if (!this->mSubcommands.empty()) {
     oss << " <COMMAND>";
   }
@@ -124,6 +164,24 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
   for (std::size_t i = 0; i < this->mArguments.size(); ++i) {
     oss << "  " << std::left << std::setw(static_cast<int>(option_width + 2))
         << option_labels[i + 1] << this->mArguments[i]->summary << '\n';
+  }
+
+  if (!this->mPositionalArguments.empty()) {
+    std::size_t argument_width = 0;
+    for (const std::shared_ptr<CommandArgument> &argument :
+         this->mPositionalArguments) {
+      if (argument->argumentName->size() > argument_width) {
+        argument_width = argument->argumentName->size();
+      }
+    }
+
+    oss << "\nArguments:\n";
+    for (const std::shared_ptr<CommandArgument> &argument :
+         this->mPositionalArguments) {
+      oss << "  " << std::left
+          << std::setw(static_cast<int>(argument_width + 2))
+          << *argument->argumentName << argument->summary << '\n';
+    }
   }
 
   if (!this->mSubcommands.empty()) {
@@ -149,9 +207,9 @@ void CommandProcessor::printHelpDocumentation(std::ostream &oss) const {
 // -----------------------------------------------------------------------------
 
 bool CommandProcessor::dispatchHelpDocumentation(
-    const std::string &keyword,
+    const std::string &aKeyword,
     [[maybe_unused]] std::queue<std::string> &arArgs) const {
-  if (::isHelpKeyword(keyword)) {
+  if (::isHelpKeyword(aKeyword)) {
     this->printHelpDocumentation(std::cout);
     return true;
   }
@@ -159,17 +217,18 @@ bool CommandProcessor::dispatchHelpDocumentation(
 }
 
 bool CommandProcessor::dispatchArgumentParsers(
-    const std::string &keyword, std::queue<std::string> &args) const {
+    const std::string &aKeyword, std::queue<std::string> &arArgs) const {
   // loop over the argument parsers
-  for (const std::shared_ptr<CommandArgument> &parser : this->mArguments) {
+  for (const std::shared_ptr<CommandOptionArgument> &parser :
+       this->mArguments) {
     // if we don't match on the keywords then move to the next argument
     // parser
-    if (std::find(parser->keywords.begin(), parser->keywords.end(), keyword) !=
+    if (std::find(parser->keywords.begin(), parser->keywords.end(), aKeyword) !=
         parser->keywords.end()) {
       std::optional<std::string> argument;
-      if (parser->argumentName && !args.empty()) {
-        argument = args.front();
-        args.pop();
+      if (parser->argumentName && !arArgs.empty()) {
+        argument = arArgs.front();
+        arArgs.pop();
       }
       parser->callback(std::move(argument));
       return true;
@@ -180,18 +239,16 @@ bool CommandProcessor::dispatchArgumentParsers(
   return false;
 }
 
-std::optional<int>
-CommandProcessor::dispatchCommandParsers(const std::string &keyword,
-                                         std::queue<std::string> &args) const {
-
-  for (const std::shared_ptr<CommandProcessor> &parser : this->mSubcommands) {
-    if (keyword == parser->mName) {
-      return parser->process(args);
-    }
+void CommandProcessor::printMissingArguments(
+    const std::size_t aParsedArgumentCount) const {
+  std::cerr << "Error: missing arguments for '" << this->mName << "':\n";
+  for (std::size_t i = aParsedArgumentCount; i < mPositionalArguments.size();
+       ++i) {
+    const std::shared_ptr<CommandArgument> &argument =
+        mPositionalArguments[i];
+    std::cerr << "  <" << *argument->argumentName << "> - " << argument->summary
+              << '\n';
   }
-
-  // we found no command matches
-  return std::nullopt;
 }
 
 } // namespace core
