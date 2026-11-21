@@ -33,6 +33,13 @@ endif()
 # ------------------------------------------------------------------------------
 include(FetchContent)
 
+FetchContent_Declare(
+    zip
+    GIT_REPOSITORY https://github.com/kuba--/zip.git
+    GIT_TAG        v0.3.15
+)
+FetchContent_MakeAvailable(zip)
+
 # ------------------------------------------------------------------------------
 # Application Sources (src/)
 # ------------------------------------------------------------------------------
@@ -61,6 +68,8 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE zip::zip)
 
 # Compile Flags
 if(MSVC)
@@ -100,6 +109,8 @@ if(BUILD_TESTS)
     target_include_directories(test_suite PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+
+    target_link_libraries(test_suite PRIVATE zip::zip)
 
     target_compile_definitions(test_suite PRIVATE
         FINANCE_CORE_VERSION="${PROJECT_VERSION}"
