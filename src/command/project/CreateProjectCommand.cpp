@@ -2,10 +2,12 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 
 #include "command/project/CreateProjectCommand.hpp"
 #include "core/ZipArchive.hpp"
+#include "project/ProjectMenifest.hpp"
 
 command::project::CreateProjectCommand::CreateProjectCommand(
     ProjectCommand *apParentCommand)
@@ -43,6 +45,20 @@ int command::project::CreateProjectCommand::executeCommand() const {
   }
   if (error != core::ZipArchiveError::NONE) {
     std::cerr << "Error: could not create project file '"
+              << projectPath.string() << "'.\n";
+    return 1;
+  }
+
+  ::project::ProjectManifest projectManifest;
+  projectManifest.set_project_name(this->mProjectName.value());
+  std::ostringstream manifestStream(std::ios::binary);
+  manifestStream << projectManifest;
+  const std::string manifestData = manifestStream.str();
+
+  const core::ZipArchiveError manifestWriteError =
+      projectArchive.writeEntry("manifest", manifestData);
+  if (manifestWriteError != core::ZipArchiveError::NONE) {
+    std::cerr << "Error: could not write the project manifest to '"
               << projectPath.string() << "'.\n";
     return 1;
   }
