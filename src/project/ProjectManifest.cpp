@@ -1,4 +1,4 @@
-#include "project/ProjectMenifest.hpp"
+#include "project/ProjectManifest.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -13,12 +13,14 @@ constexpr std::uint16_t kManifestVersion = 1;
 constexpr std::size_t kMaximumProjectNameLength = 200;
 } // namespace
 
-project::ProjectManifest::ProjectManifest() = default;
+namespace vnvg::project {
 
-project::ProjectManifest::ProjectManifest(std::istream &arInputStream) {
+ProjectManifest::ProjectManifest() = default;
+
+ProjectManifest::ProjectManifest(std::istream &arInputStream) {
   char signature[kManifestSignature.size()];
-  if (!arInputStream.read(signature, static_cast<std::streamsize>(
-                                          kManifestSignature.size())) ||
+  if (!arInputStream.read(
+          signature, static_cast<std::streamsize>(kManifestSignature.size())) ||
       std::memcmp(signature, kManifestSignature.data(),
                   kManifestSignature.size()) != 0) {
     throw std::runtime_error("invalid project manifest signature");
@@ -32,9 +34,9 @@ project::ProjectManifest::ProjectManifest(std::istream &arInputStream) {
   }
 
   unsigned char projectNameLength = 0;
-  if (!arInputStream.read(reinterpret_cast<char *>(&projectNameLength),
-                          static_cast<std::streamsize>(
-                              sizeof(projectNameLength)))) {
+  if (!arInputStream.read(
+          reinterpret_cast<char *>(&projectNameLength),
+          static_cast<std::streamsize>(sizeof(projectNameLength)))) {
     throw std::runtime_error("project manifest name length is missing");
   }
 
@@ -48,7 +50,7 @@ project::ProjectManifest::ProjectManifest(std::istream &arInputStream) {
   this->set_project_name(std::move(projectName));
 }
 
-void project::ProjectManifest::set_project_name(std::string aProjectName) {
+void ProjectManifest::set_project_name(std::string aProjectName) {
   if (aProjectName.size() > kMaximumProjectNameLength) {
     throw std::length_error("project name exceeds 200 bytes");
   }
@@ -56,7 +58,6 @@ void project::ProjectManifest::set_project_name(std::string aProjectName) {
   this->mProjectName = std::move(aProjectName);
 }
 
-namespace project {
 std::ostream &operator<<(std::ostream &arOutputStream,
                          const ProjectManifest &arManifest) {
   const auto projectNameLength =
@@ -73,4 +74,4 @@ std::ostream &operator<<(std::ostream &arOutputStream,
 
   return arOutputStream;
 }
-} // namespace project
+} // namespace vnvg::project

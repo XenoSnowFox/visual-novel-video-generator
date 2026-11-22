@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-namespace project {
+namespace vnvg::project {
 /**
  * @brief Stores the metadata encoded in a project manifest.
  *
@@ -66,4 +66,4 @@ private:
    */
   std::string mProjectName = "Untitled Project";
 };
-} // namespace project
+} // namespace vnvg::project
