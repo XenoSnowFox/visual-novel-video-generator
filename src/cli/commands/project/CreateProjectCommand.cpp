@@ -12,9 +12,10 @@
 namespace vnvg::cli::commands::project {
 
 CreateProjectCommand::CreateProjectCommand(ProjectCommand *apParentCommand)
-    : CommandProcessor("create", "", apParentCommand) {
+    : CommandProcessor("create", "Create a new project file.", apParentCommand) {
 
   this->addPositionalArgument(std::make_shared<CommandArgument>(CommandArgument{
+      .summary = "Name stored in the new project.",
       .argumentName = "PROJECT_NAME",
       .callback =
           [this](std::optional<std::string> aArg) {
@@ -23,6 +24,7 @@ CreateProjectCommand::CreateProjectCommand(ProjectCommand *apParentCommand)
   }));
 
   this->addPositionalArgument(std::make_shared<CommandArgument>(CommandArgument{
+      .summary = "Path for the new project file.",
       .argumentName = "FILENAME",
       .callback =
           [this](std::optional<std::string> aArg) {

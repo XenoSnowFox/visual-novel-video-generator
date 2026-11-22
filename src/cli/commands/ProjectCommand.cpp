@@ -6,7 +6,8 @@
 namespace vnvg::cli::commands {
 
 ProjectCommand::ProjectCommand(RootCommand *apParentCommand)
-    : CommandProcessor("project", "", apParentCommand) {
+    : CommandProcessor("project", "Manage visual novel project files.",
+                       apParentCommand) {
 
   this->addSubcommand(std::make_shared<project::CreateProjectCommand>(this));
 }
