@@ -4,7 +4,7 @@
 
 #include "cli/CommandProcessor.hpp"
 
-namespace command {
+namespace vnvg::cli::commands {
 
 /**
  * @brief Root command processor for the application.
@@ -24,4 +24,4 @@ public:
   RootCommand(std::string aProgramExectableName);
 };
 
-} // namespace command
+} // namespace vnvg::cli::commands

@@ -5,34 +5,33 @@
 #include <sstream>
 #include <string>
 
-#include "command/project/CreateProjectCommand.hpp"
+#include "cli/commands/project/CreateProjectCommand.hpp"
 #include "core/ZipArchive.hpp"
 #include "project/ProjectMenifest.hpp"
 
-command::project::CreateProjectCommand::CreateProjectCommand(
-    ProjectCommand *apParentCommand)
+namespace vnvg::cli::commands::project {
+
+CreateProjectCommand::CreateProjectCommand(ProjectCommand *apParentCommand)
     : CommandProcessor("create", "", apParentCommand) {
 
-  this->addPositionalArgument(
-      std::make_shared<vnvg::cli::CommandArgument>(vnvg::cli::CommandArgument{
-          .argumentName = "PROJECT_NAME",
-          .callback =
-              [this](std::optional<std::string> aArg) {
-                this->mProjectName = aArg.value();
-              },
-      }));
+  this->addPositionalArgument(std::make_shared<CommandArgument>(CommandArgument{
+      .argumentName = "PROJECT_NAME",
+      .callback =
+          [this](std::optional<std::string> aArg) {
+            this->mProjectName = aArg.value();
+          },
+  }));
 
-  this->addPositionalArgument(
-      std::make_shared<vnvg::cli::CommandArgument>(vnvg::cli::CommandArgument{
-          .argumentName = "FILENAME",
-          .callback =
-              [this](std::optional<std::string> aArg) {
-                this->mFilename = aArg.value();
-              },
-      }));
+  this->addPositionalArgument(std::make_shared<CommandArgument>(CommandArgument{
+      .argumentName = "FILENAME",
+      .callback =
+          [this](std::optional<std::string> aArg) {
+            this->mFilename = aArg.value();
+          },
+  }));
 }
 
-int command::project::CreateProjectCommand::executeCommand() const {
+int CreateProjectCommand::executeCommand() const {
   const std::filesystem::path projectPath(this->mFilename.value());
   core::ZipArchive projectArchive(projectPath);
 
@@ -68,3 +67,4 @@ int command::project::CreateProjectCommand::executeCommand() const {
 
   return 0;
 }
+} // namespace vnvg::cli::commands::project

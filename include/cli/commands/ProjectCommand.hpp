@@ -1,9 +1,9 @@
 #pragma once
 
 #include "cli/CommandProcessor.hpp"
-#include "command/RootCommand.hpp"
+#include "cli/commands/RootCommand.hpp"
 
-namespace command {
+namespace vnvg::cli::commands {
 
 /**
  * @brief Dispatches project-related subcommands.
@@ -23,4 +23,4 @@ public:
   ProjectCommand(RootCommand *apParentCommand);
 };
 
-} // namespace command
+} // namespace vnvg::cli::commands

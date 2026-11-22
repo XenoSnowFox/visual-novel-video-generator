@@ -4,9 +4,9 @@
 #include <string>
 
 #include "cli/CommandProcessor.hpp"
-#include "command/ProjectCommand.hpp"
+#include "cli/commands/ProjectCommand.hpp"
 
-namespace command::project {
+namespace vnvg::cli::commands::project {
 
 /**
  * @brief Creates a project archive containing its manifest at a requested path.
@@ -53,4 +53,4 @@ private:
   std::optional<std::string> mFilename;
 };
 
-} // namespace command::project
+} // namespace vnvg::cli::commands::project

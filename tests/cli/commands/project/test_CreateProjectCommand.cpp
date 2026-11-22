@@ -8,21 +8,20 @@
 #include <sstream>
 #include <string>
 
-#include "command/RootCommand.hpp"
+#include "cli/commands/RootCommand.hpp"
 
 SCENARIO("the project file is created when the filename is available") {
   GIVEN("an available filename") {
     const std::filesystem::path projectFile =
         std::filesystem::temp_directory_path() /
         ("visual-novel-video-generator-" +
-         std::to_string(std::chrono::steady_clock::now()
-                            .time_since_epoch()
-                            .count()) +
+         std::to_string(
+             std::chrono::steady_clock::now().time_since_epoch().count()) +
          ".vnv");
 
     CAPTURE(projectFile);
 
-    command::RootCommand command("visual-novel-video-generator");
+    vnvg::cli::commands::RootCommand command("visual-novel-video-generator");
     std::queue<std::string> arguments;
     arguments.push("project");
     arguments.push("create");
@@ -47,9 +46,8 @@ SCENARIO("an existing project file is not overridden") {
     const std::filesystem::path projectFile =
         std::filesystem::temp_directory_path() /
         ("visual-novel-video-generator-" +
-         std::to_string(std::chrono::steady_clock::now()
-                            .time_since_epoch()
-                            .count()) +
+         std::to_string(
+             std::chrono::steady_clock::now().time_since_epoch().count()) +
          ".vnv");
     const std::string originalContent = "existing project content";
     {
@@ -57,7 +55,7 @@ SCENARIO("an existing project file is not overridden") {
       existingFile << originalContent;
     }
 
-    command::RootCommand command("visual-novel-video-generator");
+    vnvg::cli::commands::RootCommand command("visual-novel-video-generator");
     std::queue<std::string> arguments;
     arguments.push("project");
     arguments.push("create");
