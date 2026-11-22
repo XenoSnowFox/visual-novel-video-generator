@@ -9,11 +9,11 @@
 namespace command::project {
 
 /**
- * @brief Creates an empty project archive at a requested path.
+ * @brief Creates a project archive containing its manifest at a requested path.
  *
- * The command accepts a project name and destination filename. The current
- * implementation creates the ZIP container but does not yet store a manifest
- * or other project data.
+ * The command accepts a project name and destination filename. Existing
+ * destination files are preserved. The only project entry currently written
+ * is the serialized manifest.
  */
 class CreateProjectCommand : public core::CommandProcessor {
 
@@ -30,8 +30,8 @@ protected:
   /**
    * @brief Creates the project archive requested by the parsed arguments.
    *
-   * @return `0` after creating the archive, or `1` when the destination exists
-   * or the archive cannot be created.
+   * @return `0` after creating the archive and writing its manifest, or `1`
+   * when the destination exists or either operation cannot be completed.
    */
   int executeCommand() const override;
 
