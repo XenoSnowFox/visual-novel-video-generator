@@ -1,0 +1,103 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Debug Build for windows",
+            "type": "shell",
+            "command": "cmake -S . -B build/windows -A x64 && cmake --build build/windows --config Debug",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/d",
+                        "/c"
+                    ]
+                }
+            },
+            "problemMatcher": "$msCompile",
+            "group": "build",
+            "detail": "Configure and build the Debug configuration for Windows x64."
+        },
+        {
+            "label": "Debug Build for linux",
+            "type": "shell",
+            "command": "cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Debug && cmake --build build/linux --config Debug",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "/bin/bash",
+                    "args": [
+                        "-c"
+                    ]
+                }
+            },
+            "problemMatcher": "$gcc",
+            "group": "build",
+            "detail": "Configure and build the Debug configuration on a Linux host."
+        },
+        {
+            "label": "Release Build for windows",
+            "type": "shell",
+            "command": "cmake -S . -B build/windows -A x64 && cmake --build build/windows --config Release",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/d",
+                        "/c"
+                    ]
+                }
+            },
+            "problemMatcher": "$msCompile",
+            "group": "build",
+            "detail": "Configure and build the Release configuration for Windows x64."
+        },
+        {
+            "label": "Release Build for linux",
+            "type": "shell",
+            "command": "cmake -S . -B build/linux -DCMAKE_BUILD_TYPE=Release && cmake --build build/linux --config Release",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "/bin/bash",
+                    "args": [
+                        "-c"
+                    ]
+                }
+            },
+            "problemMatcher": "$gcc",
+            "group": "build",
+            "detail": "Configure and build the Release configuration on a Linux host."
+        },
+        {
+            "label": "Build: select target and platform",
+            "type": "shell",
+            "dependsOn": "${input:buildTarget} Build for ${input:buildPlatform}",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "buildTarget",
+            "type": "pickString",
+            "description": "Select the build target.",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
+        },
+        {
+            "id": "buildPlatform",
+            "type": "pickString",
+            "description": "Select the build platform.",
+            "options": [
+                "windows",
+                "linux"
+            ],
+            "default": "windows"
+        }
+    ]
+}
