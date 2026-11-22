@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "core/CommandProcessor.hpp"
+#include "cli/CommandProcessor.hpp"
 
 namespace command {
 
@@ -11,7 +11,7 @@ namespace command {
  *
  * This processor represents the program itself and therefore has no parent.
  */
-class RootCommand : public core::CommandProcessor {
+class RootCommand : public vnvg::cli::CommandProcessor {
 
 public:
   /**

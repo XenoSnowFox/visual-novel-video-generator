@@ -1,7 +1,7 @@
 #pragma once
 
+#include "cli/CommandProcessor.hpp"
 #include "command/RootCommand.hpp"
-#include "core/CommandProcessor.hpp"
 
 namespace command {
 
@@ -11,7 +11,7 @@ namespace command {
  * The command has no behavior of its own; it owns the processors registered
  * for operations performed on project files.
  */
-class ProjectCommand : public core::CommandProcessor {
+class ProjectCommand : public vnvg::cli::CommandProcessor {
 
 public:
   /**

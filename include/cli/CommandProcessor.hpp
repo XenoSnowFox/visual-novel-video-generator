@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace vnvg::cli {
 
 /**
  * @brief Describes a command-line value and how to process it.
@@ -253,4 +253,4 @@ private:
    */
   void printMissingArguments(std::size_t aParsedArgumentCount) const;
 };
-} // namespace core
+} // namespace vnvg::cli

@@ -3,8 +3,8 @@
 #include <optional>
 #include <string>
 
+#include "cli/CommandProcessor.hpp"
 #include "command/ProjectCommand.hpp"
-#include "core/CommandProcessor.hpp"
 
 namespace command::project {
 
@@ -15,7 +15,7 @@ namespace command::project {
  * destination files are preserved. The only project entry currently written
  * is the serialized manifest.
  */
-class CreateProjectCommand : public core::CommandProcessor {
+class CreateProjectCommand : public vnvg::cli::CommandProcessor {
 
 public:
   /**

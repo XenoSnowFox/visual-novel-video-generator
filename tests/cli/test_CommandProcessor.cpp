@@ -4,19 +4,19 @@
 #include <sstream>
 #include <string>
 
-#include "core/CommandProcessor.hpp"
+#include "cli/CommandProcessor.hpp"
 
 namespace {
 /**
  * @brief Command processor test fixture which records command execution.
  */
-class HelpTestCommand final : public core::CommandProcessor {
+class HelpTestCommand final : public vnvg::cli::CommandProcessor {
 public:
   /**
    * @brief Constructs a command with a stable name and summary.
    */
-  HelpTestCommand() : CommandProcessor("help-test", "Test help output", nullptr) {
-  }
+  HelpTestCommand()
+      : CommandProcessor("help-test", "Test help output", nullptr) {}
 
   /**
    * @brief Number of times executeCommand() was invoked.

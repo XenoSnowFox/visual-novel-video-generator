@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <utility>
 
-#include "core/CommandProcessor.hpp"
+#include "cli/CommandProcessor.hpp"
 
 namespace {
 /**
@@ -19,7 +19,7 @@ inline bool isHelpKeyword(const std::string &aKeyword) {
 }
 } // namespace
 
-namespace core {
+namespace vnvg::cli {
 
 // -----------------------------------------------------------------------------
 // Construction and registration
@@ -251,11 +251,10 @@ void CommandProcessor::printMissingArguments(
   std::cerr << "Error: missing arguments for '" << this->mName << "':\n";
   for (std::size_t i = aParsedArgumentCount; i < mPositionalArguments.size();
        ++i) {
-    const std::shared_ptr<CommandArgument> &argument =
-        mPositionalArguments[i];
+    const std::shared_ptr<CommandArgument> &argument = mPositionalArguments[i];
     std::cerr << "  <" << *argument->argumentName << "> - " << argument->summary
               << '\n';
   }
 }
 
-} // namespace core
+} // namespace vnvg::cli

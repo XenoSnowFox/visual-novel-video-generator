@@ -14,7 +14,7 @@ command::project::CreateProjectCommand::CreateProjectCommand(
     : CommandProcessor("create", "", apParentCommand) {
 
   this->addPositionalArgument(
-      std::make_shared<core::CommandArgument>(core::CommandArgument{
+      std::make_shared<vnvg::cli::CommandArgument>(vnvg::cli::CommandArgument{
           .argumentName = "PROJECT_NAME",
           .callback =
               [this](std::optional<std::string> aArg) {
@@ -23,7 +23,7 @@ command::project::CreateProjectCommand::CreateProjectCommand(
       }));
 
   this->addPositionalArgument(
-      std::make_shared<core::CommandArgument>(core::CommandArgument{
+      std::make_shared<vnvg::cli::CommandArgument>(vnvg::cli::CommandArgument{
           .argumentName = "FILENAME",
           .callback =
               [this](std::optional<std::string> aArg) {
