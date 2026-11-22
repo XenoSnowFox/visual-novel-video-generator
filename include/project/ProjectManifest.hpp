@@ -33,7 +33,7 @@ public:
    * @throws std::length_error When the name cannot fit in the manifest length
    * field.
    */
-  void set_project_name(std::string aProjectName);
+  void setProjectName(std::string aProjectName);
 
   /**
    * @brief Gets the name stored in the manifest.
@@ -44,7 +44,7 @@ public:
    *
    * @return A read-only reference to the project name.
    */
-  inline const std::string &get_project_name() const {
+  inline const std::string &getProjectName() const {
     return this->mProjectName;
   }
 

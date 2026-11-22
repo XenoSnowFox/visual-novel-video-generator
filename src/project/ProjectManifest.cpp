@@ -1,6 +1,5 @@
 #include "project/ProjectManifest.hpp"
 
-#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
@@ -47,10 +46,10 @@ ProjectManifest::ProjectManifest(std::istream &arInputStream) {
     throw std::runtime_error("project manifest name is truncated");
   }
 
-  this->set_project_name(std::move(projectName));
+  this->setProjectName(std::move(projectName));
 }
 
-void ProjectManifest::set_project_name(std::string aProjectName) {
+void ProjectManifest::setProjectName(std::string aProjectName) {
   if (aProjectName.size() > kMaximumProjectNameLength) {
     throw std::length_error("project name exceeds 200 bytes");
   }

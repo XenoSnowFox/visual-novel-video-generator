@@ -6,7 +6,7 @@
 #include <windows.h>
 #endif
 
-#include "command/RootCommand.hpp"
+#include "cli/commands/RootCommand.hpp"
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   // create a new root command processor
   const std::string programExecutableName =
       std::filesystem::path(argv[0]).filename().string();
-  command::RootCommand rootCommand(programExecutableName);
+  vnvg::cli::commands::RootCommand rootCommand(programExecutableName);
 
   // execute the command
   return rootCommand.process(arguments);
