@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <string>
 
-namespace core {
+namespace vnvg::storage {
 
 /**
  * @brief Tracks the access state of a ZIP archive.
@@ -176,4 +176,4 @@ private:
    */
   ZipArchiveState mState = ZipArchiveState::CLOSED;
 };
-} // namespace core
+} // namespace vnvg::storage

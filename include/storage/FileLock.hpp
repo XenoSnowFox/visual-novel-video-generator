@@ -14,6 +14,8 @@
 #include <unistd.h>
 #endif
 
+namespace vnvg::storage {
+
 /**
  * @brief Provides an exclusive, blocking lock for a sidecar lock file.
  *
@@ -183,3 +185,5 @@ private:
    */
   bool mLocked = false;
 };
+
+} // namespace vnvg::storage

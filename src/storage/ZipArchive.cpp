@@ -1,8 +1,8 @@
-#include "core/ZipArchive.hpp"
-#include "core/FileLock.hpp"
+#include "storage/ZipArchive.hpp"
+#include "storage/FileLock.hpp"
 #include "zip.h"
 
-namespace core {
+namespace vnvg::storage {
 
 ZipArchive::ZipArchive(const std::filesystem::path aPath) : mPath(aPath) {}
 
@@ -65,4 +65,4 @@ ZipArchiveError ZipArchive::writeEntry(const std::string &arEntryKey,
   return ZipArchiveError::NONE;
 }
 
-} // namespace core
+} // namespace vnvg::storage
