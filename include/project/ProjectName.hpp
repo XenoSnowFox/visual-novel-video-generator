@@ -33,6 +33,8 @@ enum ProjectNameError {
 
 class ProjectName {
 public:
+  static inline constexpr std::size_t MAX_LENGTH = 200;
+
   /**
    * @brief Constructs a project name using the string-taking constructor.
    *
@@ -201,7 +203,7 @@ private:
     vnvg::String s = vnvg::String(aProjectName).trim();
 
     // check for a max of 200 characters
-    if (s.length() > 200) {
+    if (s.length() > ProjectName::MAX_LENGTH) {
       throw std::length_error(
           "Project Name exceeds maximum length of 200 characters.");
     }
